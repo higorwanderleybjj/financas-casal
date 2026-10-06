@@ -34,12 +34,18 @@ export const formatData = (iso: string) => {
   return `${d}/${m}`;
 };
 
-/** Aceita "1.234,56", "1234,56" ou "1234.56". */
+/**
+ * Aceita valores no padrão brasileiro: "1.234,56", "1234,56", "1.200" (= 1200),
+ * "1200" e "12.50" (= 12,5). Ponto seguido de exatamente 3 dígitos é separador de milhar.
+ */
 export function parseValor(s: string) {
-  const limpo = s.trim().replace(/\s/g, "");
+  const limpo = s.trim().replace(/R\$|\s/g, "");
+  const milhar = /^-?[1-9]\d{0,2}(\.\d{3})+$/.test(limpo);
   const n = limpo.includes(",")
     ? Number(limpo.replace(/\./g, "").replace(",", "."))
-    : Number(limpo);
+    : milhar
+      ? Number(limpo.replace(/\./g, ""))
+      : Number(limpo);
   return Number.isFinite(n) ? Math.round(n * 100) / 100 : NaN;
 }
 
