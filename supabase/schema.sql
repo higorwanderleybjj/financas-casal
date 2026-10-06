@@ -51,6 +51,7 @@ create table lancamentos (
   tipo text not null check (tipo in ('entrada', 'saida')),
   valor numeric(12,2) not null check (valor > 0),
   data date not null,
+  data_compra date,
   descricao text not null default '',
   categoria_id uuid references categorias(id) on delete set null,
   cartao_id uuid references cartoes(id) on delete set null,

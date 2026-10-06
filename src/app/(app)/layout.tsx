@@ -32,12 +32,15 @@ export default async function AppLayout({
 
       {casalId ? (
         <>
-          <nav className="mb-4 flex gap-2 text-sm">
+          <nav className="mb-4 flex flex-wrap gap-2 text-sm">
             <Link href="/" className={pilula}>
               Mês
             </Link>
             <Link href="/contas-fixas" className={pilula}>
               Contas fixas
+            </Link>
+            <Link href="/cartoes" className={pilula}>
+              Cartões
             </Link>
             <Link href="/categorias" className={pilula}>
               Categorias
