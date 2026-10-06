@@ -65,7 +65,7 @@ create table lancamentos (
 create index on lancamentos (casal_id, data);
 -- Uma conta fixa gera no máximo um lançamento por mês.
 create unique index lancamentos_conta_fixa_mes
-  on lancamentos (conta_fixa_id, date_trunc('month', data))
+  on lancamentos (conta_fixa_id, (extract(year from data)::int * 100 + extract(month from data)::int))
   where conta_fixa_id is not null;
 
 create table metas (
