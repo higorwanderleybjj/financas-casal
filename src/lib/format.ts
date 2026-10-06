@@ -1,0 +1,44 @@
+const FUSO = "America/Sao_Paulo";
+
+export const brl = (n: number) =>
+  n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+/** Data de hoje (YYYY-MM-DD) no fuso de Brasília, independente do servidor. */
+export const hoje = () =>
+  new Date().toLocaleDateString("sv-SE", { timeZone: FUSO });
+
+export const mesAtual = () => hoje().slice(0, 7);
+
+export function mesValido(m?: string | string[]) {
+  return typeof m === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(m)
+    ? m
+    : mesAtual();
+}
+
+export function somaMes(m: string, delta: number) {
+  const [a, b] = m.split("-").map(Number);
+  const d = new Date(a, b - 1 + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+export function nomeMes(m: string) {
+  const [a, b] = m.split("-").map(Number);
+  return new Date(a, b - 1, 1).toLocaleDateString("pt-BR", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+export const formatData = (iso: string) => {
+  const [, m, d] = iso.split("-");
+  return `${d}/${m}`;
+};
+
+/** Aceita "1.234,56", "1234,56" ou "1234.56". */
+export function parseValor(s: string) {
+  const limpo = s.trim().replace(/\s/g, "");
+  const n = limpo.includes(",")
+    ? Number(limpo.replace(/\./g, "").replace(",", "."))
+    : Number(limpo);
+  return Number.isFinite(n) ? Math.round(n * 100) / 100 : NaN;
+}
