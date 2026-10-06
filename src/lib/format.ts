@@ -35,17 +35,30 @@ export const formatData = (iso: string) => {
 };
 
 /**
- * Aceita valores no padrão brasileiro: "1.234,56", "1234,56", "1.200" (= 1200),
- * "1200" e "12.50" (= 12,5). Ponto seguido de exatamente 3 dígitos é separador de milhar.
+ * Lê o valor digitado em qualquer um dos estilos: "1.234,56", "1,234.56", "1.200",
+ * "1,200", "1200", "12,5" ou "12.50". Dinheiro nunca tem 3 casas decimais, então
+ * "." ou "," seguido de exatamente 3 dígitos é separador de milhar. Com os dois
+ * símbolos, o último é o decimal.
  */
 export function parseValor(s: string) {
-  const limpo = s.trim().replace(/R\$|\s/g, "");
-  const milhar = /^-?[1-9]\d{0,2}(\.\d{3})+$/.test(limpo);
-  const n = limpo.includes(",")
-    ? Number(limpo.replace(/\./g, "").replace(",", "."))
-    : milhar
-      ? Number(limpo.replace(/\./g, ""))
-      : Number(limpo);
+  const t = s.trim().replace(/R\$|\s/g, "");
+  const virgula = t.lastIndexOf(",");
+  const ponto = t.lastIndexOf(".");
+  const milhar = (sep: string) =>
+    new RegExp(`^-?[1-9]\\d{0,2}(\\${sep}\\d{3})+$`).test(t);
+
+  let n: number;
+  if (virgula >= 0 && ponto >= 0) {
+    const decimal = virgula > ponto ? "," : ".";
+    const sepMilhar = decimal === "," ? "." : ",";
+    n = Number(t.split(sepMilhar).join("").replace(decimal, "."));
+  } else if (virgula >= 0) {
+    n = milhar(",") ? Number(t.replace(/,/g, "")) : Number(t.replace(",", "."));
+  } else if (ponto >= 0) {
+    n = milhar(".") ? Number(t.replace(/\./g, "")) : Number(t);
+  } else {
+    n = Number(t);
+  }
   return Number.isFinite(n) ? Math.round(n * 100) / 100 : NaN;
 }
 
