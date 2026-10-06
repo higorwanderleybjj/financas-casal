@@ -6,7 +6,7 @@ do $$
 declare
   v_casal uuid;
   v_email_1 text := 'TROCAR-email-higor@exemplo.com';
-  v_email_2 text := 'TROCAR-email-esposa@exemplo.com';
+  v_email_2 text := 'TROCAR-email-esposa@exemplo.com'; -- pode ficar assim se ela ainda não tem login
 begin
   insert into casais (nome) values ('Nossas finanças') returning id into v_casal;
 
