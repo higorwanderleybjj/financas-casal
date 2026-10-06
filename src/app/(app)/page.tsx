@@ -1,6 +1,16 @@
 import Link from "next/link";
 import { getContextoCasal } from "@/lib/casal";
-import { brl, formatData, mesValido, nomeMes, somaMes } from "@/lib/format";
+import { gerarContasDoMes } from "@/lib/contas-fixas";
+import {
+  brl,
+  diffDias,
+  formatData,
+  hoje,
+  mesValido,
+  nomeMes,
+  somaDias,
+  somaMes,
+} from "@/lib/format";
 import { alternarPago } from "./lancamentos/actions";
 
 type Linha = {
@@ -15,15 +25,35 @@ type Linha = {
 
 export default async function Home(props: PageProps<"/">) {
   const mes = mesValido((await props.searchParams).mes);
-  const { supabase } = await getContextoCasal();
+  const { supabase, casalId } = await getContextoCasal();
 
-  const { data } = await supabase
-    .from("lancamentos")
-    .select("id, tipo, valor, data, descricao, pago, categorias(nome, cor)")
-    .gte("data", `${mes}-01`)
-    .lt("data", `${somaMes(mes, 1)}-01`)
-    .order("data", { ascending: false })
-    .order("criado_em", { ascending: false });
+  await gerarContasDoMes(supabase, casalId, mes);
+
+  const hojeStr = hoje();
+  const [{ data }, { data: venc }] = await Promise.all([
+    supabase
+      .from("lancamentos")
+      .select("id, tipo, valor, data, descricao, pago, categorias(nome, cor)")
+      .gte("data", `${mes}-01`)
+      .lt("data", `${somaMes(mes, 1)}-01`)
+      .order("data", { ascending: false })
+      .order("criado_em", { ascending: false }),
+    // Saídas pendentes atrasadas ou que vencem nos próximos 7 dias (em qualquer mês).
+    supabase
+      .from("lancamentos")
+      .select("id, valor, data, descricao")
+      .eq("tipo", "saida")
+      .eq("pago", false)
+      .lte("data", somaDias(hojeStr, 7))
+      .order("data"),
+  ]);
+
+  const vencendo = (venc ?? []) as {
+    id: string;
+    valor: number;
+    data: string;
+    descricao: string;
+  }[];
 
   const linhas = (data ?? []) as unknown as Linha[];
   const soma = (f: (l: Linha) => boolean) =>
@@ -44,7 +74,7 @@ export default async function Home(props: PageProps<"/">) {
         >
           ‹
         </Link>
-        <h2 className="text-lg font-semibold capitalize">{nomeMes(mes)}</h2>
+        <h2 className="text-lg font-semibold first-letter:uppercase">{nomeMes(mes)}</h2>
         <Link
           href={`/?mes=${somaMes(mes, 1)}`}
           className="px-3 py-1 text-lg"
@@ -76,6 +106,43 @@ export default async function Home(props: PageProps<"/">) {
           </div>
         </div>
       </div>
+
+      {vencendo.length > 0 && (
+        <div className="space-y-2 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-3">
+          <p className="text-sm font-semibold text-amber-600">
+            Vencendo em breve
+          </p>
+          <ul className="space-y-1">
+            {vencendo.map((v) => {
+              const d = diffDias(hojeStr, v.data);
+              return (
+                <li key={v.id}>
+                  <Link
+                    href={`/lancamentos/${v.id}`}
+                    className="flex justify-between gap-2 text-sm"
+                  >
+                    <span className="truncate">
+                      {v.descricao || "Sem descrição"}
+                    </span>
+                    <span className="shrink-0 text-xs">
+                      {brl(Number(v.valor))} ·{" "}
+                      <span
+                        className={d < 0 ? "font-semibold text-red-600" : ""}
+                      >
+                        {d < 0
+                          ? `atrasada ${-d}d`
+                          : d === 0
+                            ? "vence hoje"
+                            : `em ${d}d`}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
 
       {linhas.length === 0 ? (
         <p className="py-10 text-center text-sm opacity-60">

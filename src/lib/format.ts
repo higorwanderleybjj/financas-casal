@@ -42,3 +42,20 @@ export function parseValor(s: string) {
     : Number(limpo);
   return Number.isFinite(n) ? Math.round(n * 100) / 100 : NaN;
 }
+
+export const diasNoMes = (m: string) => {
+  const [a, b] = m.split("-").map(Number);
+  return new Date(a, b, 0).getDate();
+};
+
+const utc = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return Date.UTC(y, m - 1, d);
+};
+
+export const somaDias = (iso: string, n: number) =>
+  new Date(utc(iso) + n * 86400000).toISOString().slice(0, 10);
+
+/** Dias de `a` até `b` (positivo se `b` é depois de `a`). */
+export const diffDias = (a: string, b: string) =>
+  Math.round((utc(b) - utc(a)) / 86400000);
