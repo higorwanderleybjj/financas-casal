@@ -26,9 +26,9 @@ export async function proxy(request: NextRequest) {
   );
 
   // Renova a sessão e decide o redirecionamento (checagem otimista).
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims valida o token localmente (sem ida ao Supabase) e renova se expirou.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ?? null;
 
   const isLogin = request.nextUrl.pathname.startsWith("/login");
 

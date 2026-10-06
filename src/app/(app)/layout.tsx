@@ -10,18 +10,14 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { supabase, casalId, meuNome } = await getContexto();
-  const { data: casal } = await supabase
-    .from("casais")
-    .select("nome")
-    .maybeSingle();
+  const { casalId, meuNome, casalNome } = await getContexto();
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col p-4 pb-28">
       <header className="mb-4 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">
-            {casal?.nome ?? "Finanças do casal"}
+            {casalNome ?? "Finanças do casal"}
           </h1>
           {meuNome && <p className="text-xs opacity-60">Olá, {meuNome}</p>}
         </div>

@@ -12,18 +12,19 @@ export async function gerarContasDoMes(
 ) {
   if (mes > somaMes(mesAtual(), 1)) return;
 
-  const { data: contas } = await supabase
-    .from("contas_fixas")
-    .select("id, nome, valor, dia_vencimento, categoria_id")
-    .eq("ativa", true);
+  const [{ data: contas }, { data: existentes }] = await Promise.all([
+    supabase
+      .from("contas_fixas")
+      .select("id, nome, valor, dia_vencimento, categoria_id")
+      .eq("ativa", true),
+    supabase
+      .from("lancamentos")
+      .select("conta_fixa_id")
+      .not("conta_fixa_id", "is", null)
+      .gte("data", `${mes}-01`)
+      .lt("data", `${somaMes(mes, 1)}-01`),
+  ]);
   if (!contas?.length) return;
-
-  const { data: existentes } = await supabase
-    .from("lancamentos")
-    .select("conta_fixa_id")
-    .not("conta_fixa_id", "is", null)
-    .gte("data", `${mes}-01`)
-    .lt("data", `${somaMes(mes, 1)}-01`);
 
   const ja = new Set((existentes ?? []).map((e) => e.conta_fixa_id));
   const ultimoDia = diasNoMes(mes);
