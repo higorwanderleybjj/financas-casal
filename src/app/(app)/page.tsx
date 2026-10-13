@@ -62,7 +62,7 @@ export default async function Home(props: PageProps<"/">) {
   await gerarContasDoMes(supabase, casalId, mes);
 
   const hojeStr = hoje();
-  const [{ data }, { data: venc }] = await Promise.all([
+  const [{ data }, { data: venc }, { data: rec }] = await Promise.all([
     supabase
       .from("lancamentos")
       .select(
@@ -80,7 +80,25 @@ export default async function Home(props: PageProps<"/">) {
       .eq("pago", false)
       .lte("data", somaDias(hojeStr, 7))
       .order("data"),
+    // Entradas ainda não recebidas, atrasadas ou previstas para os próximos 7 dias.
+    supabase
+      .from("lancamentos")
+      .select("id, valor, data, descricao")
+      .eq("tipo", "entrada")
+      .eq("pago", false)
+      .lte("data", somaDias(hojeStr, 7))
+      .order("data"),
   ]);
+
+  const aReceberEmBreve = ((rec ?? []) as { id: string; valor: number; data: string; descricao: string }[]).map(
+    (r) => ({
+      key: r.id,
+      href: `/lancamentos/${r.id}`,
+      titulo: r.descricao || "Sem descrição",
+      valor: Number(r.valor),
+      data: r.data,
+    }),
+  );
 
   // Compras de cartão viram uma linha por fatura (cartão + vencimento).
   const vencendo: Alerta[] = [];
@@ -141,7 +159,9 @@ export default async function Home(props: PageProps<"/">) {
   const soma = (f: (l: Linha) => boolean) =>
     linhas.filter(f).reduce((t, l) => t + Number(l.valor), 0);
 
-  const entradas = soma((l) => l.tipo === "entrada");
+  // Entradas = o que já foi recebido (está no caixa). O que falta receber fica separado.
+  const entradas = soma((l) => l.tipo === "entrada" && l.pago);
+  const aReceber = soma((l) => l.tipo === "entrada" && !l.pago);
   const saidas = soma((l) => l.tipo === "saida");
   const aPagar = soma((l) => l.tipo === "saida" && !l.pago);
   const saldo = entradas - saidas;
@@ -167,16 +187,25 @@ export default async function Home(props: PageProps<"/">) {
       </div>
 
       <div className="rounded-2xl border border-black/10 p-4 dark:border-white/15">
-        <p className="text-xs opacity-60">Saldo do mês</p>
+        <p className="text-xs opacity-60">Saldo do mês (só o que já entrou no caixa)</p>
         <p
           className={`text-3xl font-semibold ${saldo < 0 ? "text-red-600" : "text-emerald-600"}`}
         >
           {brl(saldo)}
         </p>
-        <div className="mt-3 grid grid-cols-3 gap-2 text-sm">
+        {aReceber > 0 && (
+          <p className="mt-1 text-xs opacity-70">
+            Se receber tudo que falta: <strong>{brl(saldo + aReceber)}</strong>
+          </p>
+        )}
+        <div className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           <div>
-            <p className="text-xs opacity-60">Entradas</p>
+            <p className="text-xs opacity-60">Entradas (recebidas)</p>
             <p className="font-medium text-emerald-600">{brl(entradas)}</p>
+          </div>
+          <div>
+            <p className="text-xs opacity-60">A receber</p>
+            <p className="font-medium text-sky-600">{brl(aReceber)}</p>
           </div>
           <div>
             <p className="text-xs opacity-60">Saídas</p>
@@ -214,6 +243,30 @@ export default async function Home(props: PageProps<"/">) {
                           : d === 0
                             ? "vence hoje"
                             : `em ${d}d`}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      {aReceberEmBreve.length > 0 && (
+        <div className="space-y-2 rounded-2xl border border-sky-500/40 bg-sky-500/10 p-3">
+          <p className="text-sm font-semibold text-sky-600">A receber em breve</p>
+          <ul className="space-y-1">
+            {aReceberEmBreve.map((v) => {
+              const d = diffDias(hojeStr, v.data);
+              return (
+                <li key={v.key}>
+                  <Link href={v.href} className="flex justify-between gap-2 text-sm">
+                    <span className="truncate">{v.titulo}</span>
+                    <span className="shrink-0 text-xs">
+                      {brl(v.valor)} ·{" "}
+                      <span className={d < 0 ? "font-semibold text-red-600" : ""}>
+                        {d < 0 ? `atrasado ${-d}d` : d === 0 ? "é hoje" : `em ${d}d`}
                       </span>
                     </span>
                   </Link>
@@ -308,15 +361,15 @@ function LinhaLancamento({ l }: { l: Linha }) {
         <form action={alternarPago}>
           <input type="hidden" name="id" value={l.id} />
           <input type="hidden" name="pago" value={String(l.pago)} />
-          <button
-            className={`text-xs underline ${l.pago ? "opacity-50" : "text-amber-600"}`}
-          >
-            {l.pago
-              ? l.tipo === "saida"
-                ? "pago"
-                : "recebido"
-              : "pendente"}
-          </button>
+          {l.pago ? (
+            <button className="text-xs opacity-60" title="Desfazer a baixa">
+              {l.tipo === "saida" ? "pago" : "recebido"} ✓ <span className="underline">desfazer</span>
+            </button>
+          ) : (
+            <button className="mt-0.5 rounded-md bg-emerald-600/15 px-2 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+              Dar baixa
+            </button>
+          )}
         </form>
       </div>
     </li>

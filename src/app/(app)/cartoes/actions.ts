@@ -27,6 +27,17 @@ export async function criarCartao(formData: FormData) {
   revalidatePath("/cartoes");
 }
 
+/** Define ou ajusta o limite total do cartão. Vazio ou zero remove o limite. */
+export async function atualizarLimite(formData: FormData) {
+  const { supabase } = await getContextoCasal();
+  const limite = parseValor(String(formData.get("limite") ?? ""));
+  await supabase
+    .from("cartoes")
+    .update({ limite: limite > 0 ? limite : null })
+    .eq("id", String(formData.get("id")));
+  revalidatePath("/cartoes");
+}
+
 /** Arquiva em vez de apagar, para não soltar as compras do cartão. */
 export async function arquivarCartao(formData: FormData) {
   const { supabase } = await getContextoCasal();

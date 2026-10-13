@@ -58,4 +58,5 @@ export async function alternarPago(formData: FormData) {
     .update({ pago: formData.get("pago") !== "true" })
     .eq("id", String(formData.get("id")));
   revalidatePath("/");
+  revalidatePath("/cartoes");
 }
