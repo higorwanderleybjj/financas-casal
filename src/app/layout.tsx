@@ -16,7 +16,10 @@ export const metadata: Metadata = {
   title: "Finanças do casal",
   description: "Controle financeiro de casa",
   icons: { apple: "/icons/180" },
-  appleWebApp: { capable: true, title: "Finanças", statusBarStyle: "black-translucent" },
+  // "black" mantém a barra de status do iPhone separada do app (o translúcido deixava o cabeçalho por baixo do relógio).
+  appleWebApp: { capable: true, title: "Finanças", statusBarStyle: "black" },
+  // O iPhone mais antigo só reconhece esta etiqueta para abrir em tela cheia.
+  other: { "apple-mobile-web-app-capable": "yes" },
 };
 
 export const viewport: Viewport = {
