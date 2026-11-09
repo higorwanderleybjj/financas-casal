@@ -321,6 +321,12 @@ export default async function Home(props: PageProps<"/">) {
 
       <div className="fixed inset-x-0 bottom-0 mx-auto flex max-w-2xl gap-2 p-4 backdrop-blur-sm">
         <Link
+          href="/lancamentos/boleto"
+          className="rounded-xl border-2 border-emerald-600 px-3 py-3 text-center text-sm font-medium text-emerald-600"
+        >
+          Boleto
+        </Link>
+        <Link
           href="/lancamentos/novo?tipo=saida"
           className="flex-1 rounded-xl bg-red-600 py-3 text-center font-medium text-white"
         >
