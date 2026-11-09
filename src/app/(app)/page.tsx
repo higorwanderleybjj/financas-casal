@@ -257,6 +257,7 @@ export default async function Home(props: PageProps<"/">) {
                 <li key={v.key}>
                   <Link
                     href={v.href}
+                    prefetch={false}
                     className="flex justify-between gap-2 text-sm"
                   >
                     <span className="truncate">{v.titulo}</span>
@@ -288,7 +289,7 @@ export default async function Home(props: PageProps<"/">) {
               const d = diffDias(hojeStr, v.data);
               return (
                 <li key={v.key}>
-                  <Link href={v.href} className="flex justify-between gap-2 text-sm">
+                  <Link href={v.href} prefetch={false} className="flex justify-between gap-2 text-sm">
                     <span className="truncate">{v.titulo}</span>
                     <span className="shrink-0 text-xs">
                       {brl(v.valor)} ·{" "}
@@ -315,6 +316,7 @@ export default async function Home(props: PageProps<"/">) {
               <li key={item.key}>
                 <Link
                   href={`/cartoes/${item.fatura.cartaoId}?mes=${mes}`}
+                  prefetch={false}
                   className="flex items-center gap-3 p-3"
                 >
                   <span className="size-3 shrink-0 rounded-full bg-slate-500" />
@@ -377,7 +379,7 @@ function LinhaLancamento({ l }: { l: Linha }) {
         className="size-3 shrink-0 rounded-full"
         style={{ background: l.categorias?.cor ?? "#94a3b8" }}
       />
-      <Link href={`/lancamentos/${l.id}`} className="min-w-0 flex-1">
+      <Link href={`/lancamentos/${l.id}`} prefetch={false} className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">
           {l.descricao || l.categorias?.nome || "Sem descrição"}
         </p>

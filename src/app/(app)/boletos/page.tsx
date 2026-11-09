@@ -65,7 +65,7 @@ export default async function Boletos() {
           return (
             <li key={b.id} className="space-y-3 rounded-2xl border border-black/10 p-4 dark:border-white/15">
               <div className="flex items-start justify-between gap-3">
-                <Link href={`/lancamentos/${b.id}`} className="min-w-0">
+                <Link href={`/lancamentos/${b.id}`} prefetch={false} className="min-w-0">
                   <p className="truncate font-medium">{b.descricao || b.beneficiario || "Boleto"}</p>
                   {b.beneficiario && b.beneficiario !== b.descricao && <p className="truncate text-xs opacity-60">{b.beneficiario}</p>}
                   <p className="text-xs">
