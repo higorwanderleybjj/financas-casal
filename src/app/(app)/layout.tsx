@@ -50,6 +50,9 @@ export default async function AppLayout({
             <Link href="/categorias" className={pilula}>
               Categorias
             </Link>
+            <Link href="/diagnostico" className={pilula}>
+              Velocidade
+            </Link>
           </nav>
           {children}
         </>
