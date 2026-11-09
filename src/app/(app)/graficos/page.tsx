@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { NavMes } from "@/components/nav-mes";
 import { getContextoCasal } from "@/lib/casal";
 import { brl, mesValido, somaMes } from "@/lib/format";
@@ -56,6 +57,10 @@ export default async function Graficos(props: PageProps<"/graficos">) {
   return (
     <section className="space-y-6">
       <NavMes base="/graficos" mes={mes} />
+
+      <Link href={`/graficos/comparar?b=${mes}&a=${somaMes(mes, -1)}`} className="block rounded-xl bg-emerald-600 py-2 text-center text-sm font-medium text-white">
+        Comparar meses (gasto por categoria e por conta)
+      </Link>
 
       <div className="space-y-3">
         <h2 className="text-sm font-semibold uppercase opacity-60">Para onde foi o dinheiro</h2>
