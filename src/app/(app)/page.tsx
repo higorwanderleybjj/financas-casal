@@ -21,6 +21,8 @@ type Linha = {
   descricao: string;
   pago: boolean;
   cartao_id: string | null;
+  anexo_path: string | null;
+  linha_digitavel: string | null;
   categorias: { nome: string; cor: string } | null;
   cartoes: { nome: string } | null;
 };
@@ -62,11 +64,11 @@ export default async function Home(props: PageProps<"/">) {
   await gerarContasDoMes(supabase, casalId, mes);
 
   const hojeStr = hoje();
-  const [{ data }, { data: venc }, { data: rec }] = await Promise.all([
+  const [{ data }, { data: venc }, { data: rec }, { data: boletosAbertos }] = await Promise.all([
     supabase
       .from("lancamentos")
       .select(
-        "id, tipo, valor, data, descricao, pago, cartao_id, categorias(nome, cor), cartoes(nome)",
+        "id, tipo, valor, data, descricao, pago, cartao_id, anexo_path, linha_digitavel, categorias(nome, cor), cartoes(nome)",
       )
       .gte("data", `${mes}-01`)
       .lt("data", `${somaMes(mes, 1)}-01`)
@@ -88,7 +90,16 @@ export default async function Home(props: PageProps<"/">) {
       .eq("pago", false)
       .lte("data", somaDias(hojeStr, 7))
       .order("data"),
+    // Boletos lançados (com arquivo ou linha digitável) que ainda não foram pagos.
+    supabase
+      .from("lancamentos")
+      .select("valor, data")
+      .eq("tipo", "saida")
+      .eq("pago", false)
+      .or("anexo_path.not.is.null,linha_digitavel.not.is.null"),
   ]);
+  const boletosPendentes = (boletosAbertos ?? []) as { valor: number; data: string }[];
+  const boletosAtrasados = boletosPendentes.filter((b) => b.data < hojeStr).length;
 
   const aReceberEmBreve = ((rec ?? []) as { id: string; valor: number; data: string; descricao: string }[]).map(
     (r) => ({
@@ -217,6 +228,22 @@ export default async function Home(props: PageProps<"/">) {
           </div>
         </div>
       </div>
+
+      {boletosPendentes.length > 0 && (
+        <Link
+          href="/boletos"
+          className="flex items-center justify-between gap-3 rounded-2xl border border-emerald-600/40 bg-emerald-600/10 p-3 text-sm"
+        >
+          <span>
+            <strong>
+              {boletosPendentes.length} {boletosPendentes.length === 1 ? "boleto" : "boletos"} a pagar
+            </strong>
+            {boletosAtrasados > 0 && <span className="ml-2 font-semibold text-red-600">{boletosAtrasados} atrasado(s)</span>}
+            <span className="block text-xs opacity-70">Abrir o boleto, copiar a linha digitável e dar baixa</span>
+          </span>
+          <span className="shrink-0 font-semibold">{brl(boletosPendentes.reduce((t, b) => t + Number(b.valor), 0))} ›</span>
+        </Link>
+      )}
 
       {vencendo.length > 0 && (
         <div className="space-y-2 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-3">
@@ -356,6 +383,11 @@ function LinhaLancamento({ l }: { l: Linha }) {
         </p>
         <p className="text-xs opacity-60">
           {formatData(l.data)} · {l.categorias?.nome ?? "Sem categoria"}
+          {!l.pago && (l.anexo_path || l.linha_digitavel) && (
+            <span className="ml-2 rounded-full bg-emerald-600/15 px-2 py-0.5 text-[0.65rem] font-medium text-emerald-700 dark:text-emerald-400">
+              boleto
+            </span>
+          )}
         </p>
       </Link>
       <div className="text-right">

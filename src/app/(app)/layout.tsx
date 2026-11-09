@@ -32,6 +32,9 @@ export default async function AppLayout({
             <Link href="/" className={pilula}>
               Mês
             </Link>
+            <Link href="/boletos" className={pilula}>
+              Boletos
+            </Link>
             <Link href="/contas-fixas" className={pilula}>
               Contas fixas
             </Link>
